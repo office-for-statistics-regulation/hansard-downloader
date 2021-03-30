@@ -26,9 +26,9 @@ def scrape_hansard(date):
 	folder_name_lst = []
 	folder_desc_lst = []
 	sub_folder_name_lst = []
+	card_lst = []
 	link_lst = []
 	text_lst = []
-	stats_lst = []
 
 	for folder in folders:
 		# Searching just for H2 text which denotes the folder name of the publication
@@ -43,6 +43,9 @@ def scrape_hansard(date):
 
 		cards = folder.find_all("a", attrs={"class": "card card-section"})
 		for card in cards:
+			# Gets name of the card
+			card_lst.append(card.text.split('\r\n')[1].strip())
+
 			# Gets each card in each folder, finds it's URL link
 			link = 'https://hansard.parliament.uk/' + card.attrs.get('href')
 			folder_name_lst.append(folder_name)
@@ -63,10 +66,9 @@ def scrape_hansard(date):
 					text_out = text_out + ' ' + para.text
 			text_lst.append(text_out)
 
-			stats_lst.append([int(s) for s in text_out.split() if s.isdigit()])
-
-	df = pd.DataFrame(list(zip(folder_name_lst, folder_desc_lst, sub_folder_name_lst, link_lst, text_lst, stats_lst)),
-					  columns=['Folder', 'Description', 'Subfolder', 'Link', 'Text', 'Stats'])
+	df = pd.DataFrame(list(zip(folder_name_lst, folder_desc_lst, sub_folder_name_lst, card_lst, link_lst,
+							   text_lst)),
+					  columns=['Folder', 'Description', 'Subfolder', 'Card', 'Link', 'Text'])
 
 	df['date_collected'] = datetime.now().strftime('%d/%m/%Y')
 
@@ -75,11 +77,13 @@ def scrape_hansard(date):
 		return
 
 	else:
+		df = df[df.Card != ''] #Drop empty Card column entries as these will be repeats of Cards below
 		df.to_csv("latest_run.csv")
 		print(f"Found {len(df)} records from Hansard for {date}")
 		return 'Complete'
 
 
 if __name__ == '__main__':
-	date = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')  # Yesterdays date
+	date = '2021-03-15'
+	# date = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')  # Yesterdays date
 	scrape_hansard(date)
