@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import sys
 
 import requests
 from bs4 import BeautifulSoup as Soup
@@ -78,12 +79,14 @@ def scrape_hansard(date):
 
 	else:
 		df = df[df.Card != ''] #Drop empty Card column entries as these will be repeats of Cards below
-		df.to_csv("latest_run.csv")
+		df.to_csv(f"output/hansard-{date}.csv", index=False)
 		print(f"Found {len(df)} records from Hansard for {date}")
 		return 'Complete'
 
 
 if __name__ == '__main__':
-	date = '2021-03-15'
-	# date = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')  # Yesterdays date
+	if len(sys.argv[1:]) == 0:
+		date = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')
+	else:
+		date = sys.argv[1:][0]
 	scrape_hansard(date)
